@@ -1,6 +1,12 @@
-# Earlier experiments (not open data)
+# Experiments
 
-The first two experiments, in October 2026, used data that is not openly
+The first two experiments, in October 2026, trained on data that is not
+openly licensed. Experiment 3 trained on open data only, and was scored on
+the same internal test sets because no open Oshiwambo → English test set
+exists yet. All are reported here as aggregate scores, without any
+translated text.
+
+The first two experiments used data that is not openly
 licensed. They are reported here as aggregate scores only, without any
 translated text. The data, splits, models and per-sentence results are not
 released. See [experiments/](../experiments/) for how they were run.
@@ -61,3 +67,31 @@ Filtering and early stopping don't fix it: the model doesn't know
 everyday and news vocabulary, and religious text won't teach it. The
 missing piece is open, in-domain parallel data, which is what this
 repository now sets out to build.
+
+## Experiment 3 (2026-10-29): open data only, synthetic Kwanyama
+
+The first model trained only on open data. 20,000 Tatoeba English sentences
+were translated into Kwanyama by base MADLAD-400 3B (`omalaka-synthetic`).
+The filters dropped 46%: mostly copies of the English (about half the
+rejections) and invented names (about a third). That left 10,196 synthetic
+pairs plus 30 translatewiki pairs. Sentences from the test sets below and
+from Ongiini were excluded. Then M2M-100 1.2B with LoRA, 2 epochs (640 steps,
+6 minutes). The open dev set has 3 pairs, too few to select a checkpoint,
+so the final checkpoint is scored. Same internal test sets as above, scores
+only.
+
+| Model | Training | MT560 BLEU / chrF++ (kj / ng chrF++) | News chrF++ | Looping, no guard (news) | Articles with invented religious words |
+|---|---|---|---|---|---|
+| M2M-100 1.2B | none | 3.3 / 15.4 (14.8 / 15.9) | 24.3 | 53.3% | 13 of 60 |
+| M2M-100 1.2B | LoRA, 10k synthetic kj | 5.9 / 19.2 (19.7 / 18.8) | 30.0 | 7.5% | 5 of 60 |
+| MADLAD-400 3B (the teacher) | none (exp. 1) | 7.6 / 23.3 | 38.1 | 4.6% | 6 of 60 |
+
+- Synthetic pairs help M2M-100 a lot: news chrF++ rose from 24.3 to 30.0,
+  and looping fell from 53% to 7.5%. Ndonga improved as much as Kwanyama,
+  though all the synthetic data is Kwanyama.
+- The student is still well below its teacher (30.0 vs 38.1 on news). Back-
+  translation from a weak model mostly transfers what MADLAD already knows.
+  For an open system today, base MADLAD-400 is better than this fine-tune.
+- Next: fine-tune MADLAD itself on these pairs, plus any human data (it was
+  too slow on 12 GB before). And collect human translations, the only thing
+  that can raise the ceiling.
