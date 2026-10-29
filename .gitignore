@@ -1,0 +1,14 @@
+# Environments and caches
+.venv/
+__pycache__/
+*.egg-info/
+.env
+
+# Downloaded data, splits, checkpoints, logs and scores stay local.
+# Some local data is not openly licensed: never force-add these.
+data*/
+splits*/
+runs*/
+logs*/
+results*/
+models*/
