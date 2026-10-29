@@ -1,7 +1,7 @@
 # Experiments
 
 The first two experiments, in October 2026, trained on data that is not
-openly licensed. Experiment 3 trained on open data only, and was scored on
+openly licensed. Experiments 3 and 4 trained on open data only, and were scored on
 the same internal test sets because no open Oshiwambo → English test set
 exists yet. All are reported here as aggregate scores, without any
 translated text.
@@ -92,6 +92,34 @@ only.
 - The student is still well below its teacher (30.0 vs 38.1 on news). Back-
   translation from a weak model mostly transfers what MADLAD already knows.
   For an open system today, base MADLAD-400 is better than this fine-tune.
-- Next: fine-tune MADLAD itself on these pairs, plus any human data (it was
-  too slow on 12 GB before). And collect human translations, the only thing
-  that can raise the ceiling.
+- Next: fine-tune MADLAD itself on these pairs (experiment 4), and collect
+  human translations, the only thing that can raise the ceiling.
+
+## Experiment 4 (2026-10-29): MADLAD-400 on its own back-translations
+
+The same 10,226 open training pairs as experiment 3, now training MADLAD-400 3B
+with LoRA (gradient checkpointing, batch 8 x 4, max length 96, 2 epochs,
+640 steps, 41 minutes at 0.27 steps a second). Final checkpoint, same
+internal test sets, scores only.
+
+| Model | Training | MT560 BLEU / chrF++ (kj / ng chrF++) | News chrF++ | Looping, no guard (news) | Articles with invented religious words |
+|---|---|---|---|---|---|
+| MADLAD-400 3B | none (exp. 1) | 7.6 / 23.3 | **38.1** | 4.6% | 6 of 60 |
+| MADLAD-400 3B | LoRA, 10k synthetic kj | **8.7** / 21.8 (22.3 / 21.2) | 33.6 | **2.6%** | 7 of 60 |
+| M2M-100 1.2B | LoRA, 10k synthetic kj (exp. 3) | 5.9 / 19.2 | 30.0 | 7.5% | 5 of 60 |
+
+- **Training on its own output made MADLAD worse on news** (38.1 to 33.6
+  chrF++) and slightly worse on MT560 chrF++. It loops less, and BLEU on
+  MT560 rose a little. The synthetic Kwanyama side is MADLAD's own noisy
+  output, so the model learns to read its mistakes, and the short everyday
+  Tatoeba sentences pull it away from longer news sentences.
+- The base MADLAD-400 row comes from experiment 1's evaluation script; the
+  metrics are computed the same way, but it predates the current
+  `omalaka-evaluate`.
+
+## Where this leaves us
+
+Synthetic data from MADLAD-400 helps a weaker model (M2M-100), but it can't
+take quality past MADLAD itself, and it hurts MADLAD. For now the best open
+system for Oshiwambo → English is the untrained MADLAD-400 3B. Further gains
+need human translations; see [TODO.md](../TODO.md).
